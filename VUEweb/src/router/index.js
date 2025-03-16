@@ -32,12 +32,6 @@ import Visualisation from '@/views/VIsualisation.vue';
 const routes = [
   {
     path: '/',
-    name: 'Welcome',
-    component: WelcomeView,
-    meta: { requiresAuth: false },
-  },
-  {
-    path: '/recommendation',
     name: 'Recommendation',
     component: Recommendation,
     meta: { requiresAuth: false },

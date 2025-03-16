@@ -1,606 +1,949 @@
 <template>
-    <div class="uv-advice-container">
-      <div class="banner-section" :style="{ backgroundImage: `url(${backgroundImage})` }">
-        <div class="banner-text">
-          <h1>Protect your skin today for a healthier tomorrow-because the sun never forgets.</h1>
+  <div class="home-container">
+    <!-- Banner Image -->
+    <div class="banner-container">
+      <div class="banner-image">
+        <img src="@/assets/recommendpage.png" alt="Sunscreen recommendation banner" class="full-width-banner" />
+        <div class="banner-text-overlay">
+          <h1>Protect your skin today for a healthier tomorrow - because the sun never forgets.</h1>
         </div>
-      </div>
-      
-      <!-- 天气信息展示 -->
-      <div class="weather-display-section" v-if="city">
-        <h2>{{ city }}, {{ weather.country }}</h2>
-        <div class="weather-display">
-          <img :src="weather.iconUrl" alt="Weather Icon" class="weather-icon" />
-          <p class="weather-temp">{{ weather.temp }}°C</p>
-        </div>
-        <span class="weather-desc">{{ weather.description }}</span>
-      </div>
-  
-      <div class="advice-section">
-        <div class="advice-column">
-          <h2 class="section-title">UV NOW</h2>
-          <div class="uv-info">
-            <!-- 简化的 Bar 形式 UV 显示 -->
-            <div class="uv-bar-container">
-              <div class="uv-value">{{ currentUvIndex }}</div>
-              <div class="uv-level-name">{{ getUVLevelDescription() }}</div>
-              <div class="uv-bar">
-                <div v-for="i in 5" :key="i" :class="['uv-segment', `uv-level-${i}`, {'active': isLevelActive(i)}]">
-                  <span class="uv-segment-text">{{ getUvRangeText(i) }}</span>
-                </div>
-              </div>
-              <div class="uv-labels">
-                <span>Low</span>
-                <span>Medium</span>
-                <span>High</span>
-                <span>Very High</span>
-                <span>Extreme</span>
-              </div>
-            </div>
-          </div>
-        </div>
-  
-        <div class="advice-column">
-          <h2 class="section-title">SUN CREAM</h2>
-          <div class="sun-cream-advice">
-            <div class="sun-cream-image">
-              <img src="@/assets/suncream.png" alt="Sun Cream" />
-            </div>
-            <div class="sun-cream-text">
-              <h3>{{ getSPFLevel() }}</h3>
-              <p>{{ getReapplicationTime() }}</p>
-            </div>
-          </div>
-        </div>
-  
-        <div class="advice-column">
-          <h2 class="section-title">CLOTHINGS</h2>
-          <div class="clothing-items">
-            <!-- 直接使用固定路径，而不是动态路径 -->
-            <div v-if="shouldShowSunglass" class="clothing-item">
-              <img src="@/assets/sunglass.png" alt="Sunglasses" />
-            </div>
-            <div v-if="shouldShowUmbrella" class="clothing-item">
-              <img src="@/assets/umbrella.png" alt="Umbrella" />
-            </div>
-            <div v-if="shouldShowSunproof" class="clothing-item">
-              <img src="@/assets/sunproof.png" alt="Sun Protection Clothing" />
-            </div>
-            <div v-if="shouldShowMask" class="clothing-item">
-              <img src="@/assets/mask.png" alt="Face Mask" />
-            </div>
-            <div v-if="shouldShowHat" class="clothing-item">
-              <img src="@/assets/hat.png" alt="Hat" />
-            </div>
-          </div>
-        </div>
-      </div>
-  
-      <div class="more-section">
-        <button class="more-button" @click="goToMoreInfo">WANNA SEE MORE?</button>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import { ref, reactive, onMounted, computed } from 'vue';
-  import { useRouter } from 'vue-router';
-  import axios from 'axios';
-  import recommendpageImg from '@/assets/recommendpage.png';
-  
-  export default {
-    name: 'UVAdvice',
-    setup() {
-      const router = useRouter();
-      const currentUvIndex = ref(5); // 默认UV值为5
-      const isLoading = ref(true);
-      const error = ref(null);
-      const userInfo = ref({});
-      const backgroundImage = recommendpageImg;
+    
+    <!-- Left Section -->
+    <!-- 左侧区域 -->
+    <div class="left-section">
+      <!-- 位置搜索 -->
+      <div class="location-area">
+        <h2 class="section-title">LOCATION:</h2>
+        <div class="mapbox-search">
+          <input 
+            ref="mapboxInput"
+            type="text" 
+            v-model="locationInput" 
+            @input="handleLocationInput"
+            @keydown.enter="selectSuggestion(0)"
+            placeholder="Enter your location"
+          />
+          <div v-if="suggestions.length > 0" class="suggestions-dropdown">
+            <div 
+              v-for="(suggestion, index) in suggestions" 
+              :key="index" 
+              class="suggestion-item"
+              @click="selectSuggestion(index)"
+            >
+              {{ suggestion.place_name }}
+            </div>
+          </div>
+        </div>
+      </div>
       
-      // 城市和天气信息
-      const city = ref("");
-      const weather = reactive({
-        temp: 0,
-        description: "",
-        iconUrl: "",
-        country: "AU"
-      });
-      
-      // API key
-      const API_KEY = '407151980e40b39d81a056ff2d59ec23';
-      
-      // 直接使用计算属性处理装备显示逻辑
-      const shouldShowSunglass = computed(() => {
-        return currentUvIndex.value >= 5; // 3级 (5-6): 中等，需要太阳镜
-      });
-      
-      const shouldShowUmbrella = computed(() => {
-        return currentUvIndex.value >= 7; // 4级 (7-9): 强，需要遮阳伞
-      });
-      
-      const shouldShowSunproof = computed(() => {
-        return currentUvIndex.value >= 10; // 5级 (≥10): 很强，需要防晒服
-      });
-      
-      const shouldShowMask = computed(() => {
-        return currentUvIndex.value >= 10; // 5级 (≥10): 很强，需要口罩
-      });
-      
-      const shouldShowHat = computed(() => {
-        return currentUvIndex.value >= 10; // 5级 (≥10): 很强，需要帽子
-      });
-      
-      // 判断特定UV等级是否激活
-      function isLevelActive(level) {
-        const uv = currentUvIndex.value;
-        
-        switch(level) {
-          case 1: return uv >= 0 && uv <= 2;  // Low
-          case 2: return uv >= 3 && uv <= 5;  // Medium
-          case 3: return uv >= 6 && uv <= 7;  // High
-          case 4: return uv >= 8 && uv <= 10; // Very High
-          case 5: return uv >= 11;            // Extreme
-          default: return false;
-        }
-      }
-      
-      // 获取UV等级范围文本
-      function getUvRangeText(level) {
-        switch(level) {
-          case 1: return "1-2";
-          case 2: return "3-5";
-          case 3: return "6-7";
-          case 4: return "8-10";
-          case 5: return "11+";
-          default: return "";
-        }
-      }
-      
-      // 根据UV指数获取等级描述 - 基于提供的参考图片
-      function getUVLevelDescription() {
-        const index = currentUvIndex.value;
-        
-        if (index <= 2) return 'LOW';         // 1-2
-        if (index <= 5) return 'MEDIUM';      // 3-5 
-        if (index <= 7) return 'HIGH';        // 6-7
-        if (index <= 10) return 'VERY HIGH';  // 8-10
-        return 'EXTREMELY HIGH';              // 11+
-      }
-      
-      // 根据UV指数获取SPF推荐
-      function getSPFLevel() {
-        const index = currentUvIndex.value;
-        
-        if (index <= 2) return 'No protection needed';
-        if (index <= 4) return 'SPF 15++';
-        if (index <= 6) return 'SPF 30++';
-        return 'SPF 50++';
-      }
-      
-      // 获取防晒霜重新涂抹时间建议
-      function getReapplicationTime() {
-        const index = currentUvIndex.value;
-        
-        if (index <= 2) return '';
-        if (index <= 4) return 'EVERY SIX HOURS';
-        if (index <= 6) return 'EVERY FOUR HOURS';
-        return 'EVERY TWO HOURS';
-      }
-      
-      // 导航到详细信息页面
-      function goToMoreInfo() {
-        router.push('/visualisation');
-      }
-      
-      // 获取用户天气数据
-      async function fetchWeatherData() {
-        try {
-          console.log('开始获取天气数据');
+      <!-- UV指数仪表盘 -->
+      <div class="uv-meter">
+        <div class="gauge-container">
+          <!-- 使用提供的仪表盘图片 -->
+          <img src="@/assets/Indexlevel.png" alt="UV Index Gauge" class="uv-gauge-image" />
           
-          // 从localStorage获取用户信息
-          const storedUserInfo = localStorage.getItem('uvUserInfo');
-          console.log('从localStorage获取用户信息:', storedUserInfo);
-          
-          if (!storedUserInfo) {
-            console.error('未找到用户信息，返回首页');
-            router.push('/');
-            return;
-          }
-          
-          // 解析用户信息
-          userInfo.value = JSON.parse(storedUserInfo);
-          const location = userInfo.value.location;
-          city.value = location;
-          console.log('用户位置:', location);
-          
-          // 调用天气API
-          console.log(`获取${location}的天气数据`);
-          const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)},AU&appid=${API_KEY}&units=metric`;
-          
-          const response = await axios.get(weatherUrl);
-          console.log('天气API响应:', response.data);
-          
-          if (response.data) {
-            // 更新天气信息
-            weather.description = response.data.weather[0].description;
-            weather.temp = Math.round(response.data.main.temp);
-            weather.iconUrl = `https://openweathermap.org/img/w/${response.data.weather[0].icon}.png`;
-            weather.country = response.data.sys.country;
+          <!-- 指针和数值叠加层 -->
+          <div class="gauge-overlay">
+            <!-- 动态旋转的指针 -->
+            <div class="pointer-container" :style="{ transform: `rotate(${getPointerRotation()}deg)` }">
+              <div class="pointer"></div>
+            </div>
             
-            console.log('天气数据已更新:', weather);
-            
-            // 计算UV指数
-            calculateUVIndex(response.data);
-          }
-        } catch (err) {
-          console.error('获取天气数据失败:', err);
-          
-          // 设置默认值
-          weather.description = "Weather data unavailable";
-          weather.temp = 25;
-          weather.country = "AU";
-          
-          // 强制设置UV指数为5进行测试
-          currentUvIndex.value = 5;
-          console.log('测试用UV指数设为:', currentUvIndex.value);
-        } finally {
-          isLoading.value = false;
-          
-          // 保存UV数据到localStorage
-          localStorage.setItem('uvData', JSON.stringify({
-            index: currentUvIndex.value,
-            location: city.value || "Unknown",
-            timestamp: new Date().getTime()
-          }));
-          
-          console.log('UV数据已保存到localStorage');
-          console.log('当前UV指数:', currentUvIndex.value);
-          
-          // 检查各装备显示状态
-          console.log('太阳镜显示:', shouldShowSunglass.value);
-          console.log('遮阳伞显示:', shouldShowUmbrella.value);
-          console.log('防晒服显示:', shouldShowSunproof.value);
-          console.log('口罩显示:', shouldShowMask.value);
-          console.log('帽子显示:', shouldShowHat.value);
+            <!-- 右侧的UV数值显示 -->
+            <div class="uv-value">{{ uvIndex.toFixed(1) }}</div>
+          </div>
+        </div>
+        
+        <div class="uv-info">
+          <h3 class="uv-level">{{ getUVLevelText() }}</h3>
+          <p class="last-updated" v-if="lastUpdated">Last updated: {{ lastUpdated }}</p>
+        </div>
+      </div>
+      
+      <!-- 防护装备推荐 -->
+      <div class="clothing-recommendations">
+        <h3 class="clothing-title">CLOTHINGS</h3>
+        <div class="clothing-icons">
+          <!-- 太阳镜 -->
+          <div class="clothing-item" :class="{ active: shouldShowSunglasses }">
+            <img src="@/assets/sunglass.png" alt="Sunglasses" />
+          </div>
+          <!-- 口罩 -->
+          <div class="clothing-item" :class="{ active: shouldShowMask }">
+            <img src="@/assets/mask.png" alt="Mask" />
+          </div>
+          <!-- 帽子 -->
+          <div class="clothing-item" :class="{ active: shouldShowHat }">
+            <img src="@/assets/hat.png" alt="Hat" />
+          </div>
+          <!-- 遮阳伞 -->
+          <div class="clothing-item" :class="{ active: shouldShowUmbrella }">
+            <img src="@/assets/umbrella.png" alt="Umbrella" />
+          </div>
+          <!-- 防晒服 -->
+          <div class="clothing-item" :class="{ active: shouldShowSunproof }">
+            <img src="@/assets/sunproof.png" alt="Sun-proof Clothing" />
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 右侧区域 -->
+    <div class="right-section">
+      <!-- 肤质选择 -->
+      <div class="skin-type-selector">
+        <h2 class="section-title">YOUR SKIN TYPE:</h2>
+        <select v-model="selectedSkinType">
+          <option value="dry">Dry</option>
+          <option value="combination">Combination</option>
+          <option value="normal">Normal</option>
+          <option value="oily">Oily</option>
+        </select>
+      </div>
+      
+      <!-- 肤色选择 -->
+      <div class="skin-color-selector">
+        <h2 class="section-title">YOUR SKIN COLOR:</h2>
+        <div class="skin-color-options">
+          <div 
+            v-for="(color, index) in skinColors" 
+            :key="index"
+            class="skin-color-item"
+            :style="{ backgroundColor: color.hex }"
+            :class="{ active: selectedSkinColorType === index + 1 }"
+            @click="selectedSkinColorType = index + 1"
+          ></div>
+        </div>
+      </div>
+      
+      <!-- 防晒建议 -->
+      <div class="sunscreen-recommendations">
+        <div class="sunscreen-image">
+          <img src="@/assets/suncream.png" alt="Sunscreen" />
+        </div>
+        <div class="sunscreen-info">
+          <h2 class="spf-recommendation">{{ getSPFRecommendation() }}</h2>
+          <h3 class="reapplication-time">{{ getReapplicationTime() }}</h3>
+        </div>
+      </div>
+      
+      <!-- 额外防护建议 -->
+      <div class="extra-protection-advice">
+        <p>{{ getExtraProtectionAdvice() }}</p>
+      </div>
+          <!-- 底部导航 -->
+      <div class="footer">
+        <h2 class="footer-title">More Data About Sun Damage:</h2>
+        <router-link to="/visualisation" class="more-link">Click to SEE MORE</router-link>
+      </div>
+    </div>
+    
+
+    
+  </div>
+</template>
+
+<script>
+import { ref, computed, onMounted, watch } from 'vue';
+// 注意：需要安装mapbox-gl包
+// npm install mapbox-gl
+// 如果只使用geocoding API可能不需要完整的mapbox-gl
+// import mapboxgl from 'mapbox-gl';
+// import 'mapbox-gl/dist/mapbox-gl.css';
+
+export default {
+  name: 'HomeView',
+  setup() {
+    // Mapbox配置
+    const mapboxToken = 'pk.eyJ1IjoiY2hsb2V5dWUiLCJhIjoiY204YTdyNXA3MTloZjJqcHNhYjZ1c2thbCJ9.X4D17rgTFDpXuC8KUfvKLQ';
+    
+    // 响应式状态
+    const locationInput = ref('Melbourne');
+    const selectedLocation = ref({ lat: -37.8136, lng: 144.9631 }); // 默认墨尔本
+    const suggestions = ref([]);
+    const uvIndex = ref(5); // 默认UV指数为5
+    const lastUpdated = ref('');
+    const selectedSkinType = ref('dry'); // 默认干性
+    const selectedSkinColorType = ref(1); // 默认1型
+    const mapboxInput = ref(null);
+    
+    // 肤色选项
+    const skinColors = [
+      { type: 1, hex: '#422E22' }, // I型
+      { type: 2, hex: '#9C6D51' }, // II型
+      { type: 3, hex: '#BE8A67' }, // III型
+      { type: 4, hex: '#D7B195' }, // IV型
+      { type: 5, hex: '#E5CDAF' }, // V型
+      { type: 6, hex: '#F4E6D4' }  // VI型
+    ];
+    
+    // 计算属性：基于UV指数决定显示哪些防护装备
+    const shouldShowSunglasses = computed(() => uvIndex.value >= 5);
+    const shouldShowUmbrella = computed(() => uvIndex.value >= 7);
+    const shouldShowSunproof = computed(() => uvIndex.value >= 10);
+    const shouldShowMask = computed(() => uvIndex.value >= 10);
+    const shouldShowHat = computed(() => uvIndex.value >= 10);
+    
+    // 获取UV等级文本
+    const getUVLevelText = () => {
+      const index = uvIndex.value;
+      
+      if (index <= 2) return 'EXTREMELY LOW';
+      if (index <= 4) return 'LOW';
+      if (index <= 6) return 'MEDIUM';
+      if (index <= 9) return 'EXTREMELY HIGH';
+      return 'EXTREME';
+    };
+    
+    // 获取SPF推荐
+    const getSPFRecommendation = () => {
+      const index = uvIndex.value;
+      const skinType = selectedSkinColorType.value;
+      
+      // 根据UV指数和肤色类型返回SPF推荐
+      if (index <= 2) { // UV指数1级(0-2)
+        if (skinType <= 2) return 'SPF 15+';
+        return 'MOISTURIZER';
+      } else if (index <= 4) { // UV指数2级(3-4)
+        if (skinType === 1) return 'SPF 30+';
+        if (skinType === 2) return 'SPF 15-30';
+        if (skinType === 3) return 'SPF 15+';
+        return 'SPF 15';
+      } else if (index <= 6) { // UV指数3级(5-6)
+        if (skinType === 1) return 'SPF 50+';
+        if (skinType === 2) return 'SPF 30-50';
+        if (skinType === 3) return 'SPF 30+';
+        if (skinType === 4) return 'SPF 15-30';
+        return 'SPF 15+';
+      } else if (index <= 9) { // UV指数4级(7-9)
+        if (skinType === 1) return 'WATER-PROOF SPF 50+';
+        if (skinType === 2) return 'SPF 50+';
+        if (skinType === 3) return 'SPF 30-50';
+        if (skinType === 4) return 'SPF 30+';
+        if (skinType === 5) return 'SPF 15-30';
+        return 'SPF 15+';
+      } else { // UV指数5级(≥10)
+        if (skinType === 1) return 'SPF 50+ PA++++';
+        if (skinType === 2) return 'SPF 50+ PA++++';
+        if (skinType === 3) return 'SPF 50+';
+        if (skinType === 4) return 'SPF 30-50';
+        if (skinType === 5) return 'SPF 30+';
+        return 'SPF 15-30';
+      }
+    };
+    
+    // 获取重新涂抹时间
+    const getReapplicationTime = () => {
+      const index = uvIndex.value;
+      const skinType = selectedSkinColorType.value;
+      
+      // 根据UV指数和肤色类型返回重新涂抹时间
+      if (index <= 2) { // UV指数1级(0-2)
+        return '';
+      } else if (index <= 4) { // UV指数2级(3-4)
+        return 'EVERY SIX HOURS';
+      } else if (index <= 6) { // UV指数3级(5-6)
+        if (skinType === 1) return 'EVERY TWO HOURS';
+        if (skinType === 2) return 'EVERY THREE HOURS';
+        if (skinType === 3 || skinType === 4) return 'EVERY FOUR HOURS';
+        return 'EVERY SIX HOURS';
+      } else if (index <= 9) { // UV指数4级(7-9)
+        if (skinType === 1) return 'EVERY 1-2 HOURS';
+        if (skinType === 2) return 'EVERY TWO HOURS';
+        if (skinType === 3) return 'EVERY THREE HOURS';
+        if (skinType === 4) return 'EVERY FOUR HOURS';
+        if (skinType === 5) return 'EVERY 4-6 HOURS';
+        return 'EVERY SIX HOURS';
+      } else { // UV指数5级(≥10)
+        if (skinType === 1) return 'EVERY HOUR';
+        if (skinType === 2) return 'EVERY 1-2 HOURS';
+        if (skinType === 3) return 'EVERY TWO HOURS';
+        if (skinType === 4) return 'EVERY THREE HOURS';
+        if (skinType === 5) return 'EVERY FOUR HOURS';
+        return 'EVERY 4-6 HOURS';
+      }
+    };
+    
+    // 获取额外防护建议
+    const getExtraProtectionAdvice = () => {
+      const index = uvIndex.value;
+      const skinType = selectedSkinColorType.value;
+      const skinTextureType = selectedSkinType.value;
+      
+      let advice = '';
+      
+      // 根据肤质给出防晒霜类型建议 (英文版)
+      if (skinTextureType === 'dry') {
+        advice += 'Use hydrating sunscreen to prevent dryness';
+      } else if (skinTextureType === 'oily') {
+        advice += 'Use oil-control sunscreen to reduce shine';
+      } else if (skinTextureType === 'combination') {
+        advice += 'Use oil-control sunscreen for T-zone, hydrating formula for other areas';
+      } else if (skinTextureType === 'normal') {
+        advice += 'Any type of sunscreen suits well for your skin';
+      }
+      
+      // 添加额外防护建议 (英文版)
+      if (index >= 5 && skinType <= 3) {
+        advice += advice ? ', wear sunglasses' : 'Wear sunglasses';
+      }
+      
+      if (index >= 7) {
+        if (skinType <= 2) {
+          advice += advice ? ', use umbrella and hat' : 'Use umbrella and hat';
+        } else if (skinType <= 4 && index >= 8) {
+          advice += advice ? ', wear a hat' : 'Wear a hat';
         }
       }
       
-      // 根据天气数据计算UV指数
-      function calculateUVIndex(weatherData) {
-        // 获取当前小时
-        const currentHour = new Date().getHours();
-        console.log('当前时间:', currentHour);
-        
-        // 如果是夜间，UV指数为0
-        if (currentHour < 6 || currentHour > 19) {
-          currentUvIndex.value = 0;
-          console.log('夜间UV指数设为0');
-          return;
-        }
-        
-        // 从天气数据中获取参数
-        const clouds = weatherData.clouds ? weatherData.clouds.all : 0; // 云层覆盖百分比
-        const weatherMain = weatherData.weather[0].main; // 主要天气状况
-        const temp = weatherData.main.temp; // 温度
-        
-        console.log(`天气状况: ${weatherMain}, 云层覆盖: ${clouds}%, 温度: ${temp}°C`);
-        
-        // 基于天气状况和时间计算UV指数
-        let baseUV = 0;
-        
-        // 基于时间的基础UV值
-        if (currentHour >= 11 && currentHour <= 14) {
-          baseUV = 12; // 正午时段最高UV
-        } else if (currentHour >= 9 && currentHour <= 16) {
-          baseUV = 10; // 上午到下午高UV
-        } else {
-          baseUV = 7; // 早晨和傍晚中等UV
-        }
-        
-        console.log('基于时间的基础UV值:', baseUV);
-        
-        // 基于天气状况调整UV
-        if (weatherMain === 'Clear') {
-          // 晴天不变
-        } else if (weatherMain === 'Clouds') {
-          // 根据云层程度降低UV
-          if (clouds > 80) {
-            baseUV = Math.max(baseUV * 0.3, 2); // 大量云层
-          } else if (clouds > 50) {
-            baseUV = baseUV * 0.6; // 中等云层
-          } else {
-            baseUV = baseUV * 0.8; // 少量云层
-          }
-        } else if (['Rain', 'Drizzle', 'Snow'].includes(weatherMain)) {
-          baseUV = Math.min(baseUV * 0.2, 3); // 雨雪天气大幅降低UV
-        } else if (['Thunderstorm', 'Mist', 'Smoke', 'Haze', 'Dust', 'Fog'].includes(weatherMain)) {
-          baseUV = Math.min(baseUV * 0.3, 4); // 这些天气条件也显著降低UV
-        }
-        
-        // 四舍五入并设置值
-        currentUvIndex.value = Math.round(baseUV);
-        console.log('计算得出的UV指数:', currentUvIndex.value);
+      if (index >= 10 && skinType === 1) {
+        advice += advice ? ', avoid outdoor activities' : 'Avoid outdoor activities';
       }
       
-      onMounted(() => {
-        fetchWeatherData();
-      });
+      return advice;
+    };
+    
+    // 获取指针旋转角度
+    const getPointerRotation = () => {
+      // 限制UV指数范围在1到11+之间
+      const index = Math.min(Math.max(uvIndex.value, 1), 11);
       
-      return {
-        currentUvIndex,
-        isLoading,
-        error,
-        userInfo,
-        backgroundImage,
-        getUVLevelDescription,
-        getSPFLevel,
-        getReapplicationTime,
-        goToMoreInfo,
-        isLevelActive,
-        getUvRangeText,
-        city,
-        weather,
-        // 导出装备显示控制变量
-        shouldShowSunglass,
-        shouldShowUmbrella,
-        shouldShowSunproof,
-        shouldShowMask,
-        shouldShowHat
+      // 计算角度：
+      // -90度是指针起始位置（指向左侧最低值）
+      // 180度是指针覆盖的总角度范围
+      // (index - 1) / 10 计算当前UV在范围内的比例
+      const startAngle = -90;
+      const angleRange = 180;
+      const portion = (index - 1) / 10; // 0到1之间的比例
+      
+      return startAngle + (portion * angleRange);
+    };
+    
+    // 处理位置输入
+    const handleLocationInput = async () => {
+      if (locationInput.value.length < 3) {
+        suggestions.value = [];
+        return;
+      }
+      
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationInput.value)}.json?access_token=${mapboxToken}&types=place,locality,neighborhood,address`
+        );
+        
+        if (!response.ok) throw new Error('Failed to fetch suggestions');
+        
+        const data = await response.json();
+        suggestions.value = data.features;
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        suggestions.value = [];
+      }
+    };
+    
+    // 选择建议
+    const selectSuggestion = async (index) => {
+      if (suggestions.value.length <= index) return;
+      
+      const selected = suggestions.value[index];
+      locationInput.value = selected.place_name;
+      suggestions.value = [];
+      
+      // 更新位置坐标
+      selectedLocation.value = {
+        lng: selected.center[0],
+        lat: selected.center[1]
       };
-    }
-  }
-  </script>
-  
-  <style scoped>
-  .uv-advice-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f8f7f6;
-    font-family: Arial, sans-serif;
-  }
-  
-  .banner-section {
-    height: 400px;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    margin-bottom: 2rem;
-  }
-  
-  .banner-text {
-    background-color: rgba(255, 255, 255, 0.8);
-    padding: 2rem;
-    text-align: center;
-    max-width: 70%;
-  }
-  
-  .banner-text h1 {
-    font-size: 2rem;
-    color: #333;
-    margin: 0;
-    line-height: 1.4;
-  }
-  
-  /* 天气信息部分样式 */
-  .weather-display-section {
-    margin: 0 2rem 2rem;
-    padding: 1.5rem;
-    background-color: rgba(166, 124, 82, 0.1);
-    border-radius: 8px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .weather-display-section h2 {
-    color: #333;
-    margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-  }
-  
-  .weather-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .weather-icon {
-    width: 64px;
-    height: 64px;
-  }
-  
-  .weather-temp {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #a67c52;
-    margin: 0;
-  }
-  
-  .weather-desc {
-    font-size: 1.2rem;
-    color: #666;
-    text-transform: capitalize;
-  }
-  
-  .advice-section {
-    display: flex;
-    justify-content: space-between;
-    padding: 0 2rem 3rem;
-  }
-  
-  .advice-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 0 1rem;
-  }
-  
-  .section-title {
-    color: #a67c52;
-    font-size: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  
-  /* 新的 Bar 形式 UV 显示 */
-  .uv-bar-container {
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
-  }
-  
-  .uv-value {
-    font-size: 3.5rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 0.5rem;
-    line-height: 1;
-  }
-  
-  .uv-level-name {
-    font-size: 1.5rem;
-    color: #666;
-    margin-bottom: 1.5rem;
-  }
-  
-  .uv-bar {
-    height: 30px;
-    width: 100%;
-    display: flex;
-    border-radius: 15px;
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-  
-  .uv-segment {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: transparent;
-    transition: color 0.3s;
-    position: relative;
-  }
-  
-  .uv-segment-text {
-    font-size: 0.75rem;
-    position: absolute;
-    top: -20px;
-    font-weight: bold;
-    color: #666;
-  }
-  
-  .uv-segment.active {
-    color: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3) inset;
-  }
-  
-  .uv-level-1 {
-    background-color: #8BC34A; /* Low */
-  }
-  
-  .uv-level-2 {
-    background-color: #FDD835; /* Medium */
-  }
-  
-  .uv-level-3 {
-    background-color: #FB8C00; /* High */
-  }
-  
-  .uv-level-4 {
-    background-color: #D32F2F; /* Very High */
-  }
-  
-  .uv-level-5 {
-    background-color: #7B1FA2; /* Extreme */
-  }
-  
-  .uv-labels {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.7rem;
-    color: #666;
-  }
-  
-  .uv-labels span {
-    flex: 1;
-    text-align: center;
-  }
-  
-  .sun-cream-advice {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .sun-cream-image img {
-    max-width: 100px;
-    height: auto;
-    margin-bottom: 1rem;
-  }
-  
-  .sun-cream-text h3 {
-    font-size: 1.2rem;
-    color: #a67c52;
-    margin-bottom: 0.5rem;
-  }
-  
-  .clothing-items {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-  }
-  
-  .clothing-item img {
-    width: 70px;
-    height: 70px;
-    object-fit: contain;
-  }
-  
-  .more-section {
-    display: flex;
-    justify-content: flex-end;
-    padding: 2rem;
-  }
-  
-  .more-button {
-    background-color: #a67c52;
-    color: white;
-    padding: 1rem 2rem;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .more-button:hover {
-    background-color: #8b6b43;
-  }
-  
-  @media (max-width: 768px) {
-    .advice-section {
-      flex-direction: column;
-    }
+      
+      // fetchUVData将由selectedLocation的watch处理
+      // 数据将在fetchUVData中保存
+    };
     
-    .advice-column {
-      margin-bottom: 2rem;
-    }
+    // 获取UV数据
+    const fetchUVData = async () => {
+      try {
+        const { lat, lng } = selectedLocation.value;
+        console.log('Request URL:', `http://localhost:3000/api/uv?lat=${lat}&lng=${lng}`);
+        
+        let dataSource = 'API'; // 跟踪数据来源
+        
+        try {
+          // 尝试获取实际UV数据
+          const response = await fetch(`http://localhost:3000/api/uv?lat=${lat}&lng=${lng}`);
+          
+          if (!response.ok) {
+            throw new Error(`Request failed with status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log('API response:', data);
+          
+          if (data.success && data.data && data.data.result) {
+            uvIndex.value = parseFloat(data.data.result.uv);
+            const uvTime = new Date(data.data.result.uv_time);
+            lastUpdated.value = uvTime.toLocaleString();
+          } else {
+            throw new Error('Invalid API data format');
+          }
+        } catch (error) {
+          console.error('Error fetching UV data, trying mock data:', error);
+          dataSource = 'Mock'; // 更新数据来源
+          
+          // 尝试使用模拟数据
+          console.log('Trying mock data URL:', `http://localhost:3000/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
+          
+          try {
+            const mockResponse = await fetch(`http://localhost:3000/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
+            
+            if (!mockResponse.ok) {
+              throw new Error(`Mock data request failed with status: ${mockResponse.status}`);
+            }
+            
+            const mockData = await mockResponse.json();
+            console.log('Mock API response:', mockData);
+            
+            if (mockData.success && mockData.data && mockData.data.result) {
+              uvIndex.value = parseFloat(mockData.data.result.uv);
+              const uvTime = new Date(mockData.data.result.uv_time);
+              lastUpdated.value = uvTime.toLocaleString() + ' (Mock data)';
+            } else {
+              throw new Error('Invalid mock API data format');
+            }
+          } catch (mockError) {
+            console.error('Error fetching mock data:', mockError);
+            dataSource = 'Default'; // 更新数据来源
+            
+            // 如果模拟数据也失败，使用默认UV值
+            console.log('Real API and mock API both unavailable, using default UV value');
+            uvIndex.value = 5;
+            lastUpdated.value = new Date().toLocaleString() + ' (Default value)';
+          }
+        }
+        
+        // 保存到localStorage，包括数据来源信息
+        const currentTime = Date.now();
+        const locationName = locationInput.value;
+        saveToLocalStorage(locationName, uvIndex.value, lastUpdated.value, currentTime, dataSource);
+      } catch (error) {
+        console.error('Overall processing error:', error);
+        uvIndex.value = 5;
+        lastUpdated.value = new Date().toLocaleString() + ' (Default value)';
+        
+        // 即使发生错误，仍保存默认值
+        const currentTime = Date.now();
+        const locationName = locationInput.value;
+        saveToLocalStorage(locationName, uvIndex.value, lastUpdated.value, currentTime, 'Default');
+      }
+    };
     
-    .banner-text {
-      max-width: 90%;
-    }
+    // 保存到localStorage，使用统一的格式
+    const saveToLocalStorage = (location, index, updated, timestamp, source = 'API') => {
+      // 确保清理所有旧键
+      cleanupLocalStorage();
+      
+      // 创建统一的数据结构
+      const data = {
+        location: location,
+        coordinates: selectedLocation.value,
+        lastUpdated: updated,
+        skinColorType: selectedSkinColorType.value,
+        skinType: selectedSkinType.value,
+        uvIndex: index,
+        timestamp: timestamp,
+        source: source
+      };
+      
+      // 使用单一键存储所有数据
+      localStorage.setItem('sunscreenApp_data', JSON.stringify(data));
+      console.log('Saved to localStorage:', data);
+    };
+    
+    // 从localStorage加载
+    const loadFromLocalStorage = () => {
+      try {
+        // 加载数据
+        const dataString = localStorage.getItem('sunscreenApp_data');
+        if (dataString) {
+          const data = JSON.parse(dataString);
+          console.log('Loaded data from localStorage:', data);
+          
+          // 设置所有数据
+          locationInput.value = data.location || 'Melbourne';
+          selectedLocation.value = data.coordinates || { lat: -37.8136, lng: 144.9631 };
+          uvIndex.value = parseFloat(data.uvIndex) || 5;
+          lastUpdated.value = data.lastUpdated || new Date().toLocaleString();
+          selectedSkinType.value = data.skinType || 'dry';
+          selectedSkinColorType.value = data.skinColorType || 1;
+        } else {
+          // 设置并保存默认值
+          console.log('No data found, setting defaults');
+          locationInput.value = 'Melbourne';
+          selectedLocation.value = { lat: -37.8136, lng: 144.9631 };
+          selectedSkinType.value = 'dry';
+          selectedSkinColorType.value = 1;
+          
+          // 初始保存默认值到localStorage
+          saveToLocalStorage(
+            'Melbourne',
+            5,
+            new Date().toLocaleString(),
+            Date.now(),
+            'Default'
+          );
+        }
+      } catch (error) {
+        console.error('Error loading from localStorage:', error);
+        
+        // 出错时设置默认值
+        locationInput.value = 'Melbourne';
+        selectedLocation.value = { lat: -37.8136, lng: 144.9631 };
+        selectedSkinType.value = 'dry';
+        selectedSkinColorType.value = 1;
+      }
+    };
+    
+    // 监听肤色和肤质选择变化，保存首选项
+    watch([selectedSkinType, selectedSkinColorType], () => {
+      // 当用户更改肤色/肤质设置时保存
+      saveToLocalStorage(
+        locationInput.value,
+        uvIndex.value,
+        lastUpdated.value,
+        Date.now(),
+        'User preference update'
+      );
+    }, { deep: true });
+    
+    // 监听位置变化，重新获取UV数据
+    watch(selectedLocation, () => {
+      // 当用户选择新位置时获取新数据
+      // 数据将通过fetchUVData保存
+      fetchUVData();
+    }, { deep: true });
+    
+    // 组件挂载和卸载
+    onMounted(() => {
+      // 清理所有旧键
+      cleanupLocalStorage();
+      
+      // 从localStorage加载数据
+      loadFromLocalStorage();
+      
+      // 如果没有有效的UV数据或位置信息已更改，获取新数据
+      if (!lastUpdated.value) {
+        console.log('No valid UV data in localStorage, fetching new data');
+        fetchUVData();
+      } else {
+        console.log('Using UV data from localStorage:', { 
+          location: locationInput.value,
+          index: uvIndex.value,
+          lastUpdated: lastUpdated.value
+        });
+      }
+    });
+    
+    // 清理localStorage中的旧键
+    const cleanupLocalStorage = () => {
+      const keysToRemove = [
+        'sunscreenApp',
+        'sunscreenApp_uvData',
+        'sunscreenApp_preferences',
+        'uvData',
+        'uvUserInfo'
+      ];
+      
+      keysToRemove.forEach(key => {
+        if(localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+          console.log(`Removed old localStorage key: ${key}`);
+        }
+      });
+    };
+    
+    return {
+      // 状态
+      locationInput,
+      selectedLocation,
+      suggestions,
+      uvIndex,
+      lastUpdated,
+      selectedSkinType,
+      selectedSkinColorType,
+      skinColors,
+      mapboxInput,
+      
+      // 计算属性
+      shouldShowSunglasses,
+      shouldShowUmbrella,
+      shouldShowSunproof,
+      shouldShowMask,
+      shouldShowHat,
+      
+      // 方法
+      handleLocationInput,
+      selectSuggestion,
+      getUVLevelText,
+      getSPFRecommendation,
+      getReapplicationTime,
+      getExtraProtectionAdvice,
+      getPointerRotation
+    };
   }
-  </style>
+};
+</script>
+
+<style scoped>
+.home-container {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10px;
+  font-family: 'Arial', sans-serif;
+  color: #5A4132;
+}
+
+/* Banner Image */
+.banner-container {
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  margin-bottom: 30px;
+}
+
+.banner-image {
+  width: 100%;
+  position: relative;
+}
+
+.full-width-banner {
+  width: 100%;
+  height: 500px;
+  object-fit: cover;
+  object-position: center 50%;
+  display: block;
+}
+
+.banner-text-overlay {
+  position: absolute;
+  top: 80%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 100%;
+}
+
+.banner-text-overlay h1 {
+  margin: 0;
+  color: #5A4132;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* 左右区域 */
+.left-section, .right-section {
+  padding: 20px;
+}
+
+.left-section {
+  flex: 1;
+  min-width: 400px;
+}
+
+.right-section {
+  flex: 1;
+  min-width: 400px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #5A4132;
+}
+
+.mapbox-search {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.mapbox-search input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid #5A4132;
+  border-radius: 25px;
+  font-size: 16px;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  background-color: white;
+  z-index: 10;
+}
+
+.suggestion-item {
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* UV仪表盘 */
+.uv-meter {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.gauge-container {
+  position: relative;
+  width: 180%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.uv-gauge-image {
+  margin-top: 10px;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.gauge-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.pointer-container {
+  position: absolute;
+  bottom: 28%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform-origin: center bottom;
+  transition: transform 0.5s ease-out;
+}
+
+.pointer {
+  position: absolute;
+  bottom: 0;
+  left: -2px;
+  width: 4px;
+  height: 50px;  /* 缩短指针长度 */
+  background-color: #5A4132;
+  transform: translateX(-50%);
+}
+
+.pointer::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -1px;
+  width: 6px;
+  height: 6px;
+  background-color: #5A4132;
+  border-radius: 50%;
+}
+
+.uv-value {
+  position: absolute;
+  top: 15%;
+  left: 50%;  /* 把UV值移到右侧 */
+  transform: translate(-50%, -50%);
+  font-size: 45px;
+  font-weight: bold;
+  color: #5A4132;
+}
+
+.uv-info {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.uv-info .uv-level {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 5px 0;
+  color: #5A4132;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.uv-info .last-updated {
+  font-size: 14px;
+  color: #777;
+  font-style: italic;
+}
+
+/* 防护装备推荐 */
+.clothing-recommendations {
+  margin: 20px 0;
+}
+
+.clothing-title {
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.clothing-icons {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.clothing-item {
+  width: 60px;
+  height: 60px;
+  margin: 10px;
+  opacity: 0.2;  /* 降低非活动图标的透明度 */
+  filter: grayscale(80%);  /* 添加灰度滤镜增加对比 */
+  transition: all 0.3s ease;
+  background-color: #f5f5f5;  /* 添加背景色 */
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.clothing-item.active {
+  opacity: 1;
+  filter: grayscale(0%);  /* 移除灰度滤镜 */
+  background-color: #fffbea;  /* 更亮的背景色 */
+  box-shadow: 0 0 8px rgba(90, 65, 50, 0.3);  /* 添加阴影 */
+  transform: scale(1.05);  /* 放大效果 */
+}
+
+.clothing-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 肤质选择 */
+.skin-type-selector select {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid #5A4132;
+  border-radius: 25px;
+  font-size: 16px;
+  background-color: white;
+  margin-bottom: 20px;
+}
+
+/* 肤色选择 */
+.skin-color-options {
+  display: flex;
+  justify-content: space-between;
+  margin: 15px 0 30px;
+}
+
+.skin-color-item {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.skin-color-item:hover {
+  transform: scale(1.1);
+}
+
+.skin-color-item.active {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 3px #5A4132;
+}
+
+/* 防晒建议 */
+.sunscreen-recommendations {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.sunscreen-image {
+  flex: 0 0 120px;
+}
+
+.sunscreen-image img {
+  width: 100%;
+  height: auto;
+}
+
+.sunscreen-info {
+  flex: 1;
+  padding-left: 20px;
+}
+
+.spf-recommendation {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.reapplication-time {
+  font-size: 18px;
+}
+
+/* 额外防护建议 */
+.extra-protection-advice {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f4e9;
+  border-radius: 10px;
+  border-left: 4px solid #5A4132;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.extra-protection-advice p {
+  margin: 0;
+  color: #5A4132;
+}
+
+.footer {
+  width: 100%;
+  text-align: center;
+  margin-top: 40px;
+  padding: 10px 0;
+}
+
+.footer-title {
+  width: 100%;
+  text-align: center;
+  margin-top: 0px;
+  padding: 10px 0;
+  color: #5A4132;
+}
+
+.more-link {
+  display: inline-block;
+  padding: 24px 60px;
+  background-color: #5A4132;
+  color: white;
+  text-decoration: none;
+  border-radius: 45px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.more-link:hover {
+  background-color: #7a6152;
+}
+</style>
