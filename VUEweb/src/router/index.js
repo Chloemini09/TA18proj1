@@ -28,7 +28,7 @@ import ManageCommunityView from '@/views/ManageCommunityView.vue';
 import SendEmailView from '@/views/SendEmailView.vue';
 import ManageTrafficView from '@/views/ManageTrafficView.vue';
 import Recommendation from '@/views/Recommendation.vue';
-import Visualisation from '@/views/VIsualisation.vue';
+import Visualisation from '@/views/Visualisation.vue';
 const routes = [
   {
     path: '/',
