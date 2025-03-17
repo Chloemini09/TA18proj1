@@ -16,7 +16,7 @@
     <main class="charts-section">
       <div class="chart-container">
         <div class="chart-section">
-          <h2> Trends in cancer incidence rates</h2>
+          <h2> Incidence of skin cancer</h2>
           <div class="data1-button">
             <button @click="fetchData1" :disabled="loading1">
               {{ loading1 ? 'Loading...' : 'Click to SEE' }}
@@ -34,7 +34,7 @@
         </div>
 
         <div class="chart-section">
-          <h2>Cancer Mortality Rate Trend (per 100k people)</h2>
+          <h2>Mortality from skin cancer</h2>
           <div class="data2-button">
             <button @click="fetchData2" :disabled="loading2">
               {{ loading2 ? 'Loading...' : 'Click to SEE' }}
