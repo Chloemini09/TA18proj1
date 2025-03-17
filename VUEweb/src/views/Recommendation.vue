@@ -377,13 +377,13 @@ export default {
     const fetchUVData = async () => {
       try {
         const { lat, lng } = selectedLocation.value;
-        console.log('Request URL:', `http://localhost:3000/api/uv?lat=${lat}&lng=${lng}`);
+        console.log('Request URL:', `/api/uv?lat=${lat}&lng=${lng}`);
 
         let dataSource = 'API'; // 跟踪数据来源
 
         try {
           // 尝试获取实际UV数据
-          const response = await fetch(`http://localhost:3000/api/uv?lat=${lat}&lng=${lng}`);
+          const response = await fetch(`/api/uv?lat=${lat}&lng=${lng}`);
 
           if (!response.ok) {
             throw new Error(`Request failed with status: ${response.status}`);
@@ -404,10 +404,10 @@ export default {
           dataSource = 'Mock'; // 更新数据来源
 
           // 尝试使用模拟数据
-          console.log('Trying mock data URL:', `http://localhost:3000/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
+          console.log('Trying mock data URL:', `/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
 
           try {
-            const mockResponse = await fetch(`http://localhost:3000/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
+            const mockResponse = await fetch(`/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
 
             if (!mockResponse.ok) {
               throw new Error(`Mock data request failed with status: ${mockResponse.status}`);
