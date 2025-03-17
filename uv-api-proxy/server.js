@@ -9,7 +9,8 @@ const app = express();
 
 // 启用中间件
 app.use(cors({
-  origin: 'http://localhost:5173', // 您的Vue应用URL
+  origin: ['http://localhost:5173','http://3.27.122.178:3000','http://localhost:5175','http://3.27.122.178/','http://3.27.122.178:80', 
+    'http://3.27.122.178:443'], // 您的Vue应用URL
   methods: ['GET', 'POST'],
   credentials: true
 }));// 启用CORS以允许前端应用访问

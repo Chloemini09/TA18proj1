@@ -5,7 +5,7 @@
       <div class="banner-image">
         <img src="@/assets/recommendpage.png" alt="Sunscreen recommendation banner" class="full-width-banner" />
         <div class="banner-text-overlay">
-          <h1>Protect your skin today for a healthier tomorrow - because the sun never forgets.</h1>
+          <h1>Protect Your Skin Today For A Healthier Tomorrow - Because The Sun Never Forgets.</h1>
         </div>
       </div>
     </div>
@@ -79,25 +79,31 @@
         </div>
         <div class="home-container">
           <!-- Reminder Button -->
-          <button @click="openReminderModal" class="btn-reminder">Set Reminder</button>
+          <div class="reminder-button-container">
+            <button @click="openReminderModal" class="btn-reminder">Set Reminder</button>
+          </div>
 
           <!-- Reminder Modal -->
           <div v-if="isModalOpen" class="modal-overlay">
             <div class="modal-container">
               <h2>Reminder Yourself</h2>
               <div class="modal-content">
-                <input v-model.number="timerDuration" type="number" min="1" class="form-input"
-                  placeholder="Enter seconds" />
+                <!-- 用户输入倒计时时长，格式：1s, 2m, 3h -->
+                <input v-model="timeInput" type="text" class="form-input" placeholder="Enter time (e.g., 1s, 2m, 3h)" />
+                <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
                 <button @click="startTimer" class="btn-submit">Start Timer</button>
                 <button @click="stopTimer" class="btn-cancel">Cancel Timer</button>
               </div>
-              <p class="timer-status" :class="{ 'running': isTimerRunning }">Timer: {{ countdown }}</p>
-              <p v-if="showReminder" class="reminder-message">Hello, you should apply sunscreen!</p>
-              <button @click="closeReminderModal" class="btn-close">Close</button>
+              <button @click="closeReminderModal" class="btn-close"></button>
             </div>
           </div>
         </div>
       </div>
+      <!-- 主页面上的计时状态显示 -->
+      <div v-if="isTimerRunning" class="main-timer-status">
+        <p>Time Remaining: {{ countdown }}s</p>
+      </div>
+      <p v-if="showReminder" class="main-reminder-message">Hello, you should apply sunscreen!</p>
     </div>
 
 
@@ -108,6 +114,7 @@
       <div class="skin-type-selector">
         <h2 class="section-title">YOUR SKIN TYPE:</h2>
         <select v-model="selectedSkinType">
+          <option value="" disabled>Select your skin type</option> <!-- 默认占位选项 -->
           <option value="dry">Dry</option>
           <option value="combination">Combination</option>
           <option value="normal">Normal</option>
@@ -146,14 +153,11 @@
         <router-link to="/visualisation" class="more-link">Click to SEE MORE</router-link>
       </div>
     </div>
-
-
-
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 // 注意：需要安装mapbox-gl包
 // npm install mapbox-gl
 // 如果只使用geocoding API可能不需要完整的mapbox-gl
@@ -172,14 +176,16 @@ export default {
     const suggestions = ref([]);
     const uvIndex = ref(5); // 默认UV指数为5
     const lastUpdated = ref('');
-    const selectedSkinType = ref('dry'); // 默认干性
-    const selectedSkinColorType = ref(1); // 默认1型
+    const selectedSkinType = ref(null); // 默认干性
+    const selectedSkinColorType = ref(null); // 默认1型
     const mapboxInput = ref(null);
-    const timerDuration = ref(10); // 默认10秒
+    const isModalOpen = ref(false);
+    const timeInput = ref("");
     const countdown = ref(0);
     const isTimerRunning = ref(false);
     const showReminder = ref(false);
-    let timer = null;
+    const errorMessage = ref("");
+    const timer = ref(null);
 
     // 肤色选项
     const skinColors = [
@@ -377,13 +383,17 @@ export default {
     const fetchUVData = async () => {
       try {
         const { lat, lng } = selectedLocation.value;
-        console.log('Request URL:', `http://localhost:3000/api/uv?lat=${lat}&lng=${lng}`);
+        
+        // 使用环境变量获取 API 基础地址
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+        
+        console.log('Request URL:', `${apiBaseUrl}/api/uv?lat=${lat}&lng=${lng}`);
 
-        let dataSource = 'API'; // 跟踪数据来源
+        let dataSource = 'API';
 
         try {
-          // 尝试获取实际UV数据
-          const response = await fetch(`http://localhost:3000/api/uv?lat=${lat}&lng=${lng}`);
+          // 使用环境变量拼接完整 URL
+          const response = await fetch(`${apiBaseUrl}/api/uv?lat=${lat}&lng=${lng}`);
 
           if (!response.ok) {
             throw new Error(`Request failed with status: ${response.status}`);
@@ -401,13 +411,10 @@ export default {
           }
         } catch (error) {
           console.error('Error fetching UV data, trying mock data:', error);
-          dataSource = 'Mock'; // 更新数据来源
-
-          // 尝试使用模拟数据
-          console.log('Trying mock data URL:', `http://localhost:3000/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
+          dataSource = 'Mock';
 
           try {
-            const mockResponse = await fetch(`http://localhost:3000/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
+            const mockResponse = await fetch(`${apiBaseUrl}/api/uv/mock/coords?lat=${lat}&lng=${lng}`);
 
             if (!mockResponse.ok) {
               throw new Error(`Mock data request failed with status: ${mockResponse.status}`);
@@ -425,9 +432,8 @@ export default {
             }
           } catch (mockError) {
             console.error('Error fetching mock data:', mockError);
-            dataSource = 'Default'; // 更新数据来源
+            dataSource = 'Default';
 
-            // 如果模拟数据也失败，使用默认UV值
             console.log('Real API and mock API both unavailable, using default UV value');
             uvIndex.value = 5;
             lastUpdated.value = new Date().toLocaleString() + ' (Default value)';
@@ -443,7 +449,6 @@ export default {
         uvIndex.value = 5;
         lastUpdated.value = new Date().toLocaleString() + ' (Default value)';
 
-        // 即使发生错误，仍保存默认值
         const currentTime = Date.now();
         const locationName = locationInput.value;
         saveToLocalStorage(locationName, uvIndex.value, lastUpdated.value, currentTime, 'Default');
@@ -574,29 +579,73 @@ export default {
       });
     };
 
+    const openReminderModal = () => {
+      isModalOpen.value = true;
+      errorMessage.value = "";
+    };
+
+    const closeReminderModal = () => {
+      isModalOpen.value = false;
+    };
+
+    // 解析用户输入的时间 (1s, 2m, 3h)
+    const parseTimeInput = (input) => {
+      const regex = /^(\d+h)?(\d+m)?(\d+s)?$/;
+      if (!regex.test(input)) return null;
+
+      let totalSeconds = 0;
+      const match = input.match(/(\d+)h/);
+      if (match) totalSeconds += parseInt(match[1]) * 3600;
+
+      const matchMinutes = input.match(/(\d+)m/);
+      if (matchMinutes) totalSeconds += parseInt(matchMinutes[1]) * 60;
+
+      const matchSeconds = input.match(/(\d+)s/);
+      if (matchSeconds) totalSeconds += parseInt(matchSeconds[1]);
+
+      return totalSeconds;
+    };
+
     const startTimer = () => {
-      if (timer) clearInterval(timer);
-      countdown.value = timerDuration.value;
+      if (isTimerRunning.value) return; // 防止重复启动
+
+      const totalSeconds = parseTimeInput(timeInput.value);
+      if (!totalSeconds || totalSeconds <= 0) {
+        errorMessage.value = "Invalid time format. Use 1s, 2m, 3h, etc.";
+        return;
+      }
+      countdown.value = totalSeconds;
       isTimerRunning.value = true;
-      timer = setInterval(() => {
-        if (countdown.value > 0) {
+      showReminder.value = false;
+      isModalOpen.value = false;
+
+      timer.value = setInterval(() => {
+        if (countdown.value > 1) {
           countdown.value--;
         } else {
           showReminder.value = true;
-          setTimeout(() => {
-            showReminder.value = false;
-            startTimer();
-          }, 3000);
+          // 播放提示音
+          const audio = new Audio('/assets/reminder.mp3'); // 确保路径正确
+          audio.play();
+          countdown.value = totalSeconds; // 重新开始循环计时
         }
       }, 1000);
     };
 
     const stopTimer = () => {
-      clearInterval(timer);
+      if (timer.value) {
+        clearInterval(timer.value);
+        timer.value = null;
+      }
       isTimerRunning.value = false;
       countdown.value = 0;
       showReminder.value = false;
     };
+
+    // 组件卸载时，清理计时器
+    onUnmounted(() => {
+      stopTimer();
+    });
 
     return {
       // 状态
@@ -625,12 +674,17 @@ export default {
       getReapplicationTime,
       getExtraProtectionAdvice,
       getPointerRotation,
-      timerDuration,
+      // 提醒功能
+      isModalOpen,
+      openReminderModal,
+      closeReminderModal,
+      timeInput,
       countdown,
       isTimerRunning,
       showReminder,
+      errorMessage,
       startTimer,
-      stopTimer
+      stopTimer,
     };
   }
 };
@@ -995,22 +1049,23 @@ export default {
   transition: background-color 0.3s;
 }
 
-.more-link:hover {
-  background-color: #7a6152;
-}
-
-.btn-reminder {
-  background-color: #d9534f;
+/* 各类按钮 */
+.btn-submit,
+.btn-cancel,
+.btn-close {
+  background-color: #5A3E2B;
   color: white;
-  padding: 10px 20px;
+  padding: 8px 15px;
   border: none;
   border-radius: 4px;
   font-size: 1rem;
   cursor: pointer;
+  margin: 5px;
 }
 
-.btn-reminder:hover {
-  background-color: #c9302c;
+.btn-submit:disabled {
+  background-color: #bbb;
+  cursor: not-allowed;
 }
 
 .modal-overlay {
@@ -1023,6 +1078,33 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 9999;
+  /* 确保弹窗在最上层 */
+}
+
+.more-link:hover {
+  background-color: #7a6152;
+}
+
+.btn-reminder {
+  display: inline-block;
+  padding: 24px 60px;
+  background-color: #5A4132;
+  color: white;
+  text-decoration: none;
+  border-radius: 45px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn-reminder:hover {
+  background-color: #5A4132;
+}
+
+.reminder-button-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .modal-container {
@@ -1033,38 +1115,28 @@ export default {
   width: 300px;
 }
 
-.modal-content {
-  margin: 10px 0;
+/* 计时状态显示 */
+.main-timer-status {
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #5A3E2B;
+  text-align: center;
 }
 
-.btn-submit,
-.btn-cancel,
-.btn-close {
-  background-color: #d9534f;
-  color: white;
-  padding: 8px 15px;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  margin: 5px;
-}
-
-.btn-close {
-  background-color: #555;
-}
-
-.btn-close:hover {
-  background-color: #333;
-}
-
-.running {
-  color: green;
-}
-
-.reminder-message {
-  font-size: 1.2rem;
+/* 计时结束提醒信息 */
+.main-reminder-message {
+  font-size: 20px;
   color: red;
   font-weight: bold;
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* 错误信息样式 */
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
 }
 </style>

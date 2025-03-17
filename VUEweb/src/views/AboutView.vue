@@ -13,11 +13,21 @@
       </div>
 
       <p class="about-description">
-        We are a charitable organization dedicated to supporting individuals struggling with mental health challenges.
-        Our mission is to provide compassionate care, resources, and advocacy for those affected by mental illness.
-        Through counseling services, support groups, and community outreach programs, we strive to promote mental well-being
-        and reduce stigma surrounding mental health issues. Our goal is to empower individuals on their journey to recovery
-        and create a society where everyone has access to the mental health support they need.
+        Welcome to UV-SAFE, your go-to platform for sun protection awareness and personalized recommendations.  
+
+        We are dedicated to educating users about the harmful effects of neglecting sun protection and empowering them with the right tools to safeguard their skin. 
+        Prolonged exposure to UV radiation can lead to premature aging, sunburns, and even serious health concerns like skin cancer. 
+        That’s why we provide tailored recommendations based on your *skin type and skin tone*, helping you choose the best sun protection strategies that suit your needs.  
+        
+        What We Offer:
+        *Personalized Sun Protection Advice* – Get expert recommendations on sunscreen, protective clothing, and skincare based on your skin type and color.  
+        *UV Index Insights* – Stay informed about real-time UV levels in your area and take necessary precautions.  
+        *Clothing Recommendations* – Learn about the best fabrics, colors, and UPF-rated clothing to shield your skin effectively.  
+        *Awareness & Education* – Understand the long-term consequences of UV exposure and adopt smart sun safety habits.
+
+        At UV-SAFE, we believe *prevention is better than cure*. Protect your skin today for a healthier tomorrow! 🌞  
+
+        Stay safe, stay sun-smart!
       </p>
 
       <div class="contact-info">
