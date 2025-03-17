@@ -13,11 +13,7 @@
       </div>
 
       <p class="about-description">
-        We are a charitable organization dedicated to supporting individuals struggling with mental health challenges.
-        Our mission is to provide compassionate care, resources, and advocacy for those affected by mental illness.
-        Through counseling services, support groups, and community outreach programs, we strive to promote mental well-being
-        and reduce stigma surrounding mental health issues. Our goal is to empower individuals on their journey to recovery
-        and create a society where everyone has access to the mental health support they need.
+        SunProtection is a website focusing on sun protection knowledge and skincare health, dedicated to helping users understand the effects of UV rays and providing scientifically effective sun protection strategies. We provide you with professional sun protection advice, product recommendations.
       </p>
 
       <div class="contact-info">
