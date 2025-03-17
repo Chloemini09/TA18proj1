@@ -86,9 +86,21 @@
           <div class="clothing-item" :class="{ active: shouldShowSunproof }">
             <img src="@/assets/sunproof.png" alt="Sun-proof Clothing" />
           </div>
+        </div>  
+      <div class="timer-box">
+        <h2>Set Reminder Timer</h2>
+        <div class="timer-controls">
+          <input v-model.number="timerDuration" type="number" min="1" class="form-input" placeholder="Enter seconds" />
+          <button @click="startTimer" class="btn-submit">Start Timer</button>
+          <button @click="stopTimer" class="btn-cancel">Cancel Timer</button>
+        </div>
+        <p class="timer-status" :class="{'running': isTimerRunning}">Timer: {{ countdown }}</p>
+        <p v-if="showReminder" class="reminder-message">Hello, you should apply sunscreen!</p>
         </div>
       </div>
     </div>
+
+
     
     <!-- 右侧区域 -->
     <div class="right-section">
@@ -168,6 +180,11 @@ export default {
     const selectedSkinType = ref('dry'); // 默认干性
     const selectedSkinColorType = ref(1); // 默认1型
     const mapboxInput = ref(null);
+    const timerDuration = ref(10); // 默认10秒
+    const countdown = ref(0);
+    const isTimerRunning = ref(false);
+    const showReminder = ref(false);
+    let timer = null;
     
     // 肤色选项
     const skinColors = [
@@ -561,6 +578,30 @@ export default {
         }
       });
     };
+
+    const startTimer = () => {
+      if (timer) clearInterval(timer);
+      countdown.value = timerDuration.value;
+      isTimerRunning.value = true;
+      timer = setInterval(() => {
+        if (countdown.value > 0) {
+          countdown.value--;
+        } else {
+          showReminder.value = true;
+          setTimeout(() => {
+            showReminder.value = false;
+            startTimer();
+          }, 3000);
+        }
+      }, 1000);
+    };
+    
+    const stopTimer = () => {
+      clearInterval(timer);
+      isTimerRunning.value = false;
+      countdown.value = 0;
+      showReminder.value = false;
+    };
     
     return {
       // 状态
@@ -588,7 +629,13 @@ export default {
       getSPFRecommendation,
       getReapplicationTime,
       getExtraProtectionAdvice,
-      getPointerRotation
+      getPointerRotation,
+      timerDuration,
+      countdown,
+      isTimerRunning,
+      showReminder,
+      startTimer,
+      stopTimer
     };
   }
 };
@@ -945,5 +992,58 @@ export default {
 
 .more-link:hover {
   background-color: #7a6152;
+}
+
+.timer-box {
+  padding: 1rem;
+  border: 2px solid #a67c52;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.timer-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.timer-status {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+.running {
+  color: green;
+}
+.reminder-message {
+  font-size: 1.2rem;
+  color: red;
+  font-weight: bold;
+}
+.btn-submit {
+  background-color: #d9534f;
+  color: white;
+    
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer; 
+}
+.btn-cancel {
+  background-color: #d9534f;
+  color: white;
+    
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.btn-cancel:hover {
+  background-color: #c9302c;
+}
+.form-input {
+  padding: 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 </style>
