@@ -70,7 +70,7 @@
             <div class="uv-section">
                 <div class="uv-display">
                     <h2 class="right-section-title">YOUR LOCATION:</h2>
-                    <p class="location-text">Melbourne, Victoria, Australia</p>
+                    <p class="location-text">{{ getLocation() }}</p>
 
                     <h2 class="right-section-title">CURRENT UV INDEX:</h2>
                     <div class="uv-circle">
@@ -149,7 +149,7 @@ export default {
         // 获取地址
         const getLocation = () => {
             // 获取 localStorage 数据
-            const dataString = localStorage.getItem('sunscreenApp_data');
+            const dataString = localStorage.getItem('uvSearchData');
 
             // 如果数据为空，则返回 null
             if (!dataString) {
@@ -244,26 +244,26 @@ export default {
             if (index <= 2) { // UV指数1级(0-2)
                 return '';
             } else if (index <= 4) { // UV指数2级(3-4)
-                return 'EVERY SIX HOURS';
+                return 'EVERY SIX HOURS, 1 SPOON';
             } else if (index <= 6) { // UV指数3级(5-6)
-                if (skinType === 1) return 'EVERY TWO HOURS';
-                if (skinType === 2) return 'EVERY THREE HOURS';
-                if (skinType === 3 || skinType === 4) return 'EVERY FOUR HOURS';
-                return 'EVERY SIX HOURS';
+                if (skinType === 1) return 'EVERY TWO HOURS,2 SPOONS';
+                if (skinType === 2) return 'EVERY THREE HOURS,1 SPOON';
+                if (skinType === 3 || skinType === 4) return 'EVERY FOUR HOURS,1 SPOON';
+                return 'EVERY SIX HOURS, 1 SPOON';
             } else if (index <= 9) { // UV指数4级(7-9)
-                if (skinType === 1) return 'EVERY 1-2 HOURS';
-                if (skinType === 2) return 'EVERY TWO HOURS';
-                if (skinType === 3) return 'EVERY THREE HOURS';
-                if (skinType === 4) return 'EVERY FOUR HOURS';
-                if (skinType === 5) return 'EVERY 4-6 HOURS';
-                return 'EVERY SIX HOURS';
+                if (skinType === 1) return 'EVERY 1-2 HOURS,2 SPOONS';
+                if (skinType === 2) return 'EVERY TWO HOURS,2 SPOONS';
+                if (skinType === 3) return 'EVERY THREE HOURS,2 SPOONS';
+                if (skinType === 4) return 'EVERY FOUR HOURS,3 SPOONS';
+                if (skinType === 5) return 'EVERY 4-6 HOURS,3 SPOONS';
+                return 'EVERY SIX HOURS, SPOONS';
             } else { // UV指数5级(≥10)
-                if (skinType === 1) return 'EVERY HOUR';
-                if (skinType === 2) return 'EVERY 1-2 HOURS';
-                if (skinType === 3) return 'EVERY TWO HOURS';
-                if (skinType === 4) return 'EVERY THREE HOURS';
-                if (skinType === 5) return 'EVERY FOUR HOURS';
-                return 'EVERY 4-6 HOURS';
+                if (skinType === 1) return 'EVERY HOUR,1 SPOONS';
+                if (skinType === 2) return 'EVERY 1-2 HOURS,2 SPOONS';
+                if (skinType === 3) return 'EVERY TWO HOURS,3 SPOONS';
+                if (skinType === 4) return 'EVERY THREE HOURS,3 SPOONS';
+                if (skinType === 5) return 'EVERY FOUR HOURS,3 SPOONS';
+                return 'EVERY 4-6 HOURS, 2 SPOONS';
             }
         };
 
@@ -418,7 +418,7 @@ export default {
             };
 
             // 使用单一键存储所有数据
-            localStorage.setItem('sunscreenApp_data', JSON.stringify(data));
+            localStorage.setItem('uvSearchData', JSON.stringify(data));
             console.log('Saved to localStorage:', data);
         };
 
@@ -426,7 +426,7 @@ export default {
         const loadFromLocalStorage = () => {
             try {
                 // 加载数据
-                const dataString = localStorage.getItem('sunscreenApp_data');
+                const dataString = localStorage.getItem('uvSearchData');
                 if (dataString) {
                     const data = JSON.parse(dataString);
                     console.log('Loaded data from localStorage:', data);
