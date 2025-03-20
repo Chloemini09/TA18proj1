@@ -80,10 +80,10 @@ import { ref } from "vue";
 import { useRouter } from 'vue-router';
 import officeMaleImage from "@/assets/office_male.jpg";
 import officeFemaleImage from "@/assets/office_female.jpg";
-// import beachMaleImage from "@/assets/beach_male.jpg";
-// import beachFemaleImage from "@/assets/beach_female.jpg";
-// import hikingMaleImage from "@/assets/hiking_male.jpg";
-// import hikingFemaleImage from "@/assets/hiking_female.jpg";
+import beachMaleImage from "@/assets/beach_male.jpg";
+import beachFemaleImage from "@/assets/beach_female.jpg";
+import hikingMaleImage from "@/assets/hiking_male.jpg";
+import hikingFemaleImage from "@/assets/hiking_female.jpg";
 
 export default {
     setup() {
@@ -111,14 +111,14 @@ export default {
             },
             beach: {
                 male: {
-                    //image: beachMaleImage,
+                    image: beachMaleImage,
                     items: [
                         "A UV-protective Swim Shirt.",
                         "Knee-length swimming shorts to cover your legs."
                     ]
                 },
                 female: {
-                    //image: beachFemaleImage,
+                    image: beachFemaleImage,
                     items: [
                         "A Sun-protective swimsuit.",
                         "A lightweight cover-up for extra protection."
@@ -127,14 +127,14 @@ export default {
             },
             hiking: {
                 male: {
-                    //image: hikingMaleImage,
+                    image: hikingMaleImage,
                     items: [
                         "A long sleeve moisture-wicking shirt.",
                         "Full-length breathable hiking pants."
                     ]
                 },
                 female: {
-                    //image: hikingFemaleImage,
+                    image: hikingFemaleImage,
                     items: [
                         "A lightweight hiking jacket with UV protection.",
                         "Long trekking pants to protect from sun and insects."

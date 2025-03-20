@@ -3,6 +3,7 @@
     <div class="logo-container">
       <img src="@/assets/logo.png" alt="UV Safe Logo" class="logo" />
     </div>
+
     <nav class="b-nav">
       <router-link v-for="item in navItems" :key="item.path" :to="item.path"
         :ref="el => { if (el) navRefs[item.path] = el }" class="nav-item"
@@ -11,40 +12,26 @@
         {{ item.label }}
       </router-link>
     </nav>
+
     <!-- 计时器按钮 -->
     <button @click="openReminderModal" class="btn-reminder">Set Reminder</button>
 
     <!-- 计时器弹窗 -->
-    <div v-if="isModalOpen" class="modal-overlay">
-      <div class="modal-container">
-        <h2>Set Sunscreen Reminder</h2>
-        <div class="modal-content">
-          <input v-model="timeInput" type="text" class="form-input" placeholder="Enter time (e.g., 1s, 2m, 3h)" />
-          <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-          <button @click="startTimer" class="btn-submit">Start Timer</button>
-          <button @click="stopTimer" class="btn-cancel">Cancel Timer</button>
-        </div>
-        <button @click="closeReminderModal" class="btn-close"></button>
-
-
-        <!-- 计时状态（放入弹窗） -->
-        <div v-if="isTimerRunning" class="main-timer-status">
-          <p>Time Remaining: {{ countdown }}s</p>
-        </div>
-      </div>
-    </div>
+    <ReminderModal :isModalOpen="isModalOpen" :closeReminderModal="closeReminderModal" :startTimer="startTimer"
+      :stopTimer="stopTimer" :countdown="countdown" :isTimerRunning="isTimerRunning" />
   </header>
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { reactive, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import ReminderModal from "@/components/ReminderModal.vue";
 import { useTimer } from "@/composables/useTimer";
 
 export default {
   name: 'BHeader',
+  components: { ReminderModal },
   props: {
-    // 可以从父组件传入自定义导航项
     customNavItems: {
       type: Array,
       default: () => []
@@ -55,16 +42,15 @@ export default {
     const currentPath = computed(() => route.path);
     const navRefs = reactive({});
 
+    // 计时器相关
     const {
       isModalOpen,
       openReminderModal,
       closeReminderModal,
-      timeInput,
-      countdown,
-      isTimerRunning,
-      errorMessage,
       startTimer,
-      stopTimer
+      stopTimer,
+      countdown,
+      isTimerRunning
     } = useTimer();
 
     // 默认导航项
@@ -76,18 +62,18 @@ export default {
       { label: 'RECOMMENDATION', path: '/recommendation', index: 4 }
     ];
 
-    // 合并自定义导航项与默认导航项
+    // 让 `startTimer` 接受参数
+    const handleStartTimer = (totalSeconds) => {
+      startTimer(totalSeconds);
+    };
+
     const navItems = computed(() => {
-      if (props.customNavItems && props.customNavItems.length > 0) {
-        return props.customNavItems.map((item, index) => ({
-          ...item,
-          index
-        }));
+      if (props.customNavItems.length > 0) {
+        return props.customNavItems.map((item, index) => ({ ...item, index }));
       }
       return defaultNavItems;
     });
 
-    // 键盘导航功能
     function navigatePrev(currentIndex) {
       if (currentIndex > 0) {
         const prevItem = navItems.value[currentIndex - 1];
@@ -119,15 +105,14 @@ export default {
       navRefs,
       navigatePrev,
       navigateNext,
+      isModalOpen,
       openReminderModal,
       closeReminderModal,
-      isModalOpen,
-      timeInput,
+      startTimer,
+      stopTimer,
       countdown,
       isTimerRunning,
-      errorMessage,
-      startTimer,
-      stopTimer
+      handleStartTimer
     };
   }
 }
@@ -143,34 +128,6 @@ export default {
   background-color: #f8f7f6;
 }
 
-/* 计时器 */
-.btn-submit,
-.btn-cancel {
-  display: inline-block;
-  /* 确保按钮在同一行 */
-  width: auto;
-  /* 确保按钮大小不会被压缩 */
-  border: none;
-  /* 清除所有边框 */
-  background-color: #a67c52;
-  /* 适当调整背景色 */
-  color: white;
-  /* 按钮文本颜色 */
-  padding: 10px 20px;
-  /* 适当的内边距 */
-  margin: 5px;
-  /* 避免按钮挤在一起 */
-  border-radius: 5px;
-  /* 轻微圆角 */
-  cursor: pointer;
-  text-align: center;
-}
-
-.btn-submit:hover,
-.btn-cancel:hover {
-  background-color: #8b5e3c;
-}
-
 .btn-reminder {
   background: #FFD700;
   color: black;
@@ -180,35 +137,6 @@ export default {
   cursor: pointer;
   font-size: 16px;
 }
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-}
-
-.modal-container {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  width: 300px;
-}
-
-.main-timer-status {
-  font-size: 18px;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-/* 其他 */
 
 .logo-container {
   display: flex;

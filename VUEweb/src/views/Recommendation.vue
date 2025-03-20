@@ -12,17 +12,6 @@
         <!-- 左侧区域 -->
         <div class="left-section">
             <h2 class="left-title">Please provide the following below details:</h2>
-            <!-- 肤质选择 -->
-            <!-- <div class="skin-type-selector">
-                <h2 class="section-title">SKIN TYPE:</h2>
-                <select v-model="selectedSkinType">
-                    <option value="" disabled>Select your skin type</option>
-                    <option value="dry">Dry</option>
-                    <option value="combination">Combination</option>
-                    <option value="normal">Normal</option>
-                    <option value="oily">Oily</option>
-                </select>
-            </div> -->
             <!-- 选择肤质类型 -->
             <div class="activity-area">
                 <h3 class="section-title">SKIN TYPE:</h3>
@@ -132,7 +121,7 @@ export default {
         //获取UV数据
         const getUVData = () => {
             // 获取 localStorage 数据
-            const dataString = localStorage.getItem('sunscreenApp_data');
+            const dataString = localStorage.getItem('uvSearchData');
 
             // 如果数据为空，则返回 null
             if (!dataString) {
