@@ -15,11 +15,6 @@
                         <option v-for="m in 61" :key="m - 1" :value="m - 1">{{ m - 1 }}</option>
                     </select>
                     <span>min</span>
-
-                    <select v-model="selectedSeconds">
-                        <option v-for="s in 61" :key="s - 1" :value="s - 1">{{ s - 1 }}</option>
-                    </select>
-                    <span>sec</span>
                 </div>
 
                 <div class="btn-group">
@@ -52,24 +47,22 @@ export default {
     setup(props) {
         const selectedHours = ref(0);
         const selectedMinutes = ref(0);
-        const selectedSeconds = ref(0);
 
         // 当用户修改时间时，更新倒计时的总秒数
         const handleStartTimer = () => {
-            const totalSeconds = selectedHours.value * 3600 + selectedMinutes.value * 60 + selectedSeconds.value;
+            const totalMinutes = selectedHours.value * 60 + selectedMinutes.value;
 
-            if (totalSeconds <= 0) {
+            if (totalMinutes <= 0) {
                 alert("Please select a valid time greater than 0 seconds.");
                 return;
             }
-
+            const totalSeconds = totalMinutes * 60;
             props.startTimer(totalSeconds); // 传递总秒数到 `BHeader.vue`
         };
 
         return {
             selectedHours,
             selectedMinutes,
-            selectedSeconds,
             handleStartTimer
         };
     }

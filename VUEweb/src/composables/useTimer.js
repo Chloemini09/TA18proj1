@@ -13,21 +13,21 @@ export function useTimer() {
 
   // 开始计时器
   const startTimer = (totalSeconds) => { // 让它接受时间
-    if (isTimerRunning.value) return;
+      if (isTimerRunning.value) return;
 
-    countdown.value = totalSeconds;
-    isTimerRunning.value = true;
-    isModalOpen.value = false;
+      countdown.value = totalSeconds;
+      isTimerRunning.value = true;
+      isModalOpen.value = false;
 
-    timer = setInterval(() => {
-        if (countdown.value > 1) {
-            countdown.value--;
-        } else {
-            alert("It's time to reapply sunscreen!");
-            countdown.value = totalSeconds; // 重新开始
-        }
-    }, 1000);
-};
+      timer = setInterval(() => {
+          if (countdown.value > 1) {
+              countdown.value--;
+          } else {
+              alert("It's time to reapply sunscreen!");
+              countdown.value = totalSeconds; // 重新开始
+          }
+      }, 1000);
+  };
 
   // 设定自定义倒计时时间
   const setCustomTime = (seconds) => {
