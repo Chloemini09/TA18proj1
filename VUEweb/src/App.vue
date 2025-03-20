@@ -1,52 +1,58 @@
 <script setup>
-import { computed } from 'vue'; // Import computed from vue
-import { useRoute } from 'vue-router'; // Import useRoute from vue-router
-//import JSONLab from './components/JSONLab.vue';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import BHeader from './components/BHeader.vue';
+import BFooter from './components/BFooter.vue';
 
 const route = useRoute();
 
-// Computed property to control the visibility of the header
+// 计算属性控制头部和底部的显示
 const showHeader = computed(() => route.name !== 'CountBookAPI');
+const showFooter = computed(() => route.name !== 'CountBookAPI');
 </script>
 
 <template>
-  <div class="main-container">
-    <header v-if="showHeader">
-      <BHeader />
-    </header>
-
-    <main class="main-box">
+  <div class="app-container">
+    <BHeader v-if="showHeader" />
+    
+    <main class="main-content">
       <router-view></router-view>
     </main>
+    
+    <BFooter v-if="showFooter" />
   </div>
 </template>
 
-<style scoped>
-/* header {
-  line-height: 1.5;
+<style>
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  color: #333;
+  line-height: 1.6;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+.main-content {
+  flex: 1;
+}
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-} */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+}
 </style>

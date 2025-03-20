@@ -8,18 +8,19 @@
         <img src="@/assets/image3.png" alt="Healthy Skin" />
       </div>
       <div class="title-overlay">
-        <h1>“BRIGHTER DAYS, BIGGER RISKS - STAY PROTECTED !!”</h1>
+        <h1>BRIGHTER DAYS, BIGGER RISKS - STAY PROTECTED</h1>
       </div>
     </header>
 
-    <!-- 图表内容部分，放置在背景图片的上方 -->
+    <!-- 改为上下布局的图表部分 -->
     <main class="charts-section">
-      <div class="chart-container">
+      <!-- 第一个图表部分 -->
+      <div class="chart-row">
         <div class="chart-section">
-          <h2> Incidence of skin cancer</h2>
-          <div class="data1-button">
+          <h2>Incidence of skin cancer</h2>
+          <div class="data-button">
             <button @click="fetchData1" :disabled="loading1">
-              {{ loading1 ? 'Loading...' : 'Click to SEE' }}
+              {{ loading1 ? 'Loading...' : 'Click to REFRESH' }}
             </button>
           </div>
           <div v-if="loading1" class="loading">Loading...</div>
@@ -28,16 +29,31 @@
             <canvas ref="cancerChart1" :id="'cancerChart1Canvas'"></canvas>
           </div>
         </div>
-
-        <div class="footer-section">
-          <h2>“STAY SAFE KEEP ENJOYING !!”</h2>
+        
+        <!-- 第一个图表右侧的悬浮信息卡片 -->
+        <div class="info-card">
+          <h2>Melanoma Cases Rising, Death Rates Stable</h2>
+          <ul>
+            <li>Since the 1990s, melanoma cases have increased, but deaths remain steady.</li>
+            <li>Early detection and better treatments are saving lives.</li>
+          </ul>
+          
+          <h3>Why the Rise?</h3>
+          <ul>
+            <li>More sun exposure from outdoor activities.</li>
+            <li>Ozone depletion increasing UV radiation.</li>
+            <li>Better detection through screenings and awareness.</li>
+          </ul>
         </div>
+      </div>
 
+      <!-- 第二个图表部分 -->
+      <div class="chart-row">
         <div class="chart-section">
           <h2>Mortality from skin cancer</h2>
-          <div class="data2-button">
+          <div class="data-button">
             <button @click="fetchData2" :disabled="loading2">
-              {{ loading2 ? 'Loading...' : 'Click to SEE' }}
+              {{ loading2 ? 'Loading...' : 'Click to REFRESH' }}
             </button>
           </div>
           <div v-if="loading2" class="loading">Loading...</div>
@@ -46,8 +62,29 @@
             <canvas ref="cancerChart2" :id="'cancerChart2Canvas'"></canvas>
           </div>
         </div>
+        
+        <!-- 第二个图表右侧的悬浮信息卡片 -->
+        <div class="info-card">
+          <h2>Melanoma & Skin Cancer Trends</h2>
+          <ul>
+            <li>The graph tracks skin cancer death rates in Australia over decades.</li>
+            <li>Melanoma (yellow line) is more fatal than non-melanoma skin cancers (NMSC).</li>
+            <li>Melanoma deaths remained stable for years but are now declining due to early detection, better treatment, and sun safety awareness.</li>
+          </ul>
+          
+          <h3>What It Means for You</h3>
+          <ul>
+            <li>Melanoma is the deadliest skin cancer, but prevention and early detection save lives.</li>
+            <li>Falling death rates show progress, but staying vigilant is key.</li>
+          </ul>
+        </div>
       </div>
     </main>
+
+    <!-- 页脚信息 -->
+    <footer class="footer-section">
+      <h2>STAY SAFE KEEP ENJOYING</h2>
+    </footer>
   </div>
 </template>
 
@@ -269,14 +306,21 @@ export default {
 .page-container {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  margin: 0 auto;
   align-items: center;
   text-align: center;
+  min-height: 100vh;
+  max-width: 1400px;
+  padding: 0 20px;
 }
 
 /* 背景图片和标题 */
 .header-section {
   position: relative;
   width: 100%;
+  margin-bottom: 40px;
+  align-items: center; 
 }
 
 .background-images {
@@ -286,10 +330,13 @@ export default {
   position: absolute;
   top: 0;
   z-index: -1;
+  gap: 20px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .background-images img {
-  width: 33%;
+  width: 30%;
   height: auto;
 }
 
@@ -299,41 +346,38 @@ export default {
 }
 
 .title-overlay {
-  margin-top: 30px;
+  margin-top: 250px;
   position: relative;
   background-color: rgba(255, 255, 255, 0.5);
-  padding: 80px;
+  padding: 40px;
   border-radius: 10px;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: bold;
   display: inline-block;
-  /* 让背景仅适应内容 */
   max-width: 80%;
-  /* 限制最大宽度 */
   width: fit-content;
-  /* 使宽度自动适应内容 */
   text-align: center;
-  /* 文本居中 */
 }
 
-
-/* 图表部分居中，控制顶部距离 */
+/* 改为垂直排列的图表部分 */
 .charts-section {
-  position: relative;
   margin-top: 100px;
-  /* 调整此值以控制图表距离顶部的距离 */
-  width: 80%;
+  position: relative;
+  width: 90%;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 50px; /* 图表行之间的间距 */
 }
 
-.chart-container {
+.chart-row {
   display: flex;
-  justify-content: space-between;
   width: 100%;
+  gap: 20px;
 }
 
 .chart-section {
-  width: 45%;
+  width: 60%; /* 让图表占据较大部分 */
   padding: 20px;
   border: 1px solid #ddd;
   border-radius: 10px;
@@ -341,78 +385,111 @@ export default {
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* 页脚部分固定在背景图片的下方 */
+/* 信息卡片样式 */
+.info-card {
+  width: 35%; /* 让信息卡片占据剩余部分 */
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+  text-align: left; /* 文本左对齐 */
+  border: 1px solid #e0d3c0; /* 浅棕色边框 */
+  height: fit-content; /* 适应内容高度 */
+  align-self: center; /* 垂直居中 */
+}
+
+.info-card h2 {
+  color: #8b6b43; /* 棕色标题 */
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #e0d3c0;
+  padding-bottom: 8px;
+}
+
+.info-card h3 {
+  color: #8b6b43; /* 棕色标题 */
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 1.3rem;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.info-card ul {
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+.info-card li {
+  margin-bottom: 8px;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: #333;
+}
+
+/* 页脚部分样式 */
 .footer-section {
   background-color: rgba(255, 255, 255, 0.5);
   padding: 20px;
   border-radius: 10px;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: bold;
-  display: flex;
-  /* 使用flexbox布局 */
-  justify-content: center;
-  /* 水平居中 */
-  align-items: center;
-  /* 垂直居中 */
+  margin: 40px 0;
   text-align: center;
-  /* 让文本居中 */
-  width: 15%;
-  /* 让宽度适应内容 */
-  height: 400px;
-  /* 固定高度 */
+  width: fit-content;
 }
 
 .chart-wrapper {
   width: 100%;
-  /* 设置宽度为100%，以适应父容器 */
-  height: 400px;
-  /* 设置固定高度为400px */
+  height: 350px; /* 图表高度 */
 }
 
 .loading {
   color: #666;
-  /* 设置加载文本的颜色为深灰色 */
   text-align: center;
-  /* 文本居中对齐 */
   padding: 20px;
-  /* 设置内边距为20px */
 }
 
 .error {
   color: red;
-  /* 设置错误消息的颜色为红色，以突出错误信息 */
   text-align: center;
-  /* 文本居中对齐 */
   padding: 20px;
-  /* 设置内边距为20px */
+}
+
+.data-button {
+  margin-bottom: 15px;
 }
 
 button {
-  margin: 0 auto;
-  /* 让按钮水平居中 */
   padding: 10px 15px;
-  /* 设置上下边距为10px，左右边距为15px */
   background-color: #5A4132;
-  /* 设置按钮背景颜色为深棕色 */
   color: white;
-  /* 文字颜色设置为白色 */
   border: none;
-  /* 移除默认边框 */
   border-radius: 5px;
-  /* 设置圆角，使按钮更美观 */
   cursor: pointer;
-  /* 设置鼠标指针为手型，表示可点击 */
 }
 
 button:disabled {
   background-color: #cccccc;
-  /* 设置禁用状态按钮的背景颜色为浅灰色 */
   cursor: not-allowed;
-  /* 设置鼠标样式为禁用状态 */
 }
 
 button:hover:not(:disabled) {
   background-color: #808080;
-  /* 设置鼠标悬停时的按钮背景颜色为灰色 */
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .chart-row {
+    flex-direction: column;
+  }
+  
+  .chart-section, .info-card {
+    width: 100%;
+  }
+  
+  .info-card {
+    margin-top: 20px;
+  }
 }
 </style>
